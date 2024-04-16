@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slowly Moving Photos with Background and Audio</title>
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background-image: url("Capturing\ Her\ Essence\ A\ Photographic\ Journey.png");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed; /* Ensures the background image doesn't move */
+    }
+    .photo {
+        position: absolute;
+        cursor: pointer;
+        transition: transform 3s ease-in-out;
+        width: 200px; /* Set the width of the photos */
+        height: auto; /* Maintain aspect ratio */
+    }
+</style>
+</head>
+<body>
+
+<!-- Add audio element -->
+<audio id="backgroundAudio" loop>
+  <source src="music.mp3" type="audio/mp3">
+  <!-- Add alternative audio sources if needed -->
+</audio>
+
+<!-- Add as many photos as you want -->
+<img class="photo" src="WhatsApp Image 2024-04-15 at 2.34.39 PM (1).jpeg">
+<img class="photo" src="WhatsApp Image 2024-04-15 at 2.34.40 PM.jpeg">
+<img class="photo" src="WhatsApp Image 2024-04-15 at 2.34.39 PM.jpeg">
+<!-- Add more images as needed -->
+
+<script>
+    // Play audio when the page is clicked
+    document.addEventListener('click', function() {
+        var audio = document.getElementById('backgroundAudio');
+        audio.play();
+    });
+
+    // Function to move photos slowly to a new position
+    function movePhotoSlowly(photo) {
+        var screenWidth = window.innerWidth;
+        var screenHeight = window.innerHeight;
+        var randomX = Math.floor(Math.random() * (screenWidth - 100)); // Adjusted size
+        var randomY = Math.floor(Math.random() * (screenHeight - 100)); // Adjusted size
+        photo.style.transform = `translate(${randomX}px, ${randomY}px)`;
+    }
+
+    // Initialize photo movement
+    var photos = document.querySelectorAll('.photo');
+    photos.forEach(function(photo) {
+        movePhotoSlowly(photo);
+        photo.addEventListener('click', function() {
+            showFullScreen(photo);
+        });
+        // Repeat the movement every 2 seconds
+        setInterval(function() {
+            movePhotoSlowly(photo);
+        }, 2000);
+    });
+
+    // Function to show photo in full screen
+    function showFullScreen(photo) {
+        var fullscreenContainer = document.createElement('div');
+        fullscreenContainer.style.position = 'fixed';
+        fullscreenContainer.style.top = '0';
+        fullscreenContainer.style.left = '0';
+        fullscreenContainer.style.width = '100%';
+        fullscreenContainer.style.height = '100%';
+        fullscreenContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        fullscreenContainer.style.display = 'flex';
+        fullscreenContainer.style.flexDirection = 'column'; // Adjusted to column layout
+        fullscreenContainer.style.justifyContent = 'flex-start'; // Adjusted to top alignment
+        fullscreenContainer.style.alignItems = 'flex-start'; // Adjusted to left alignment
+        fullscreenContainer.style.padding = '20px'; // Add padding for button
+
+        var fullscreenImage = new Image();
+        fullscreenImage.src = photo.src;
+        fullscreenImage.style.maxWidth = '100%';
+        fullscreenImage.style.maxHeight = 'calc(100% - 40px)'; // Adjusted to accommodate the back button
+        fullscreenImage.style.cursor = 'zoom-in';
+
+        fullscreenImage.addEventListener('mousedown', function(event) {
+            event.preventDefault();
+            fullscreenImage.style.cursor = 'grabbing';
+            var prevX = event.clientX;
+            var prevY = event.clientY;
+
+            function move(event) {
+                var newX = event.clientX;
+                var newY = event.clientY;
+                var deltaX = newX - prevX;
+                var deltaY = newY - prevY;
+                fullscreenImage.scrollLeft -= deltaX;
+                fullscreenImage.scrollTop -= deltaY;
+                prevX = newX;
+                prevY = newY;
+            }
+
+            function stopMove() {
+                fullscreenImage.removeEventListener('mousemove', move);
+                fullscreenImage.removeEventListener('mouseup', stopMove);
+                fullscreenImage.style.cursor = 'zoom-in';
+            }
+
+            fullscreenImage.addEventListener('mousemove', move);
+            fullscreenImage.addEventListener('mouseup', stopMove);
+        });
+
+        fullscreenImage.addEventListener('wheel', function(event) {
+            event.preventDefault();
+            var scaleFactor = 1.1;
+            var delta = event.deltaY || event.detail || event.wheelDelta;
+            var rect = fullscreenImage.getBoundingClientRect();
+            var posX = event.clientX - rect.left;
+            var posY = event.clientY - rect.top;
+            var scaleX = posX / fullscreenImage.offsetWidth;
+            var scaleY = posY / fullscreenImage.offsetHeight;
+
+            var zoom = delta > 0 ? 1 / scaleFactor : scaleFactor;
+            var newScrollLeft = (posX - (rect.width * scaleX)) * (1 - zoom) + fullscreenImage.scrollLeft;
+            var newScrollTop = (posY - (rect.height * scaleY)) * (1 - zoom) + fullscreenImage.scrollTop;
+
+            fullscreenImage.style.transform = `scale(${zoom})`;
+            fullscreenImage.scrollLeft = newScrollLeft;
+            fullscreenImage.scrollTop = newScrollTop;
+        });
+
+        var backButton = document.createElement('button');
+        backButton.textContent = 'Back';
+        backButton.style.backgroundColor = 'black'; // Set button background color
+        backButton.style.color = 'white'; // Set button text color
+        backButton.style.border = 'none'; // Remove button border
+        backButton.style.padding = '10px'; // Adjust button padding
+        backButton.style.borderRadius = '50%'; // Make button oval-shaped
+        backButton.addEventListener('click', function() {
+            document.body.removeChild(fullscreenContainer);
+        });
+
+        fullscreenContainer.appendChild(backButton); // Append the back button
+        fullscreenContainer.appendChild(fullscreenImage);
+        document.body.appendChild(fullscreenContainer);
+    }
+</script>
+
+</body>
+</html>
